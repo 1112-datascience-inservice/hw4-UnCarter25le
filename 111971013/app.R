@@ -1,67 +1,27 @@
+
+
+# Note from assistant and Teacher:
 #ggbiplot is not on CRAN, it is only available on GitHub. It can be installed by following cmmand.
 
 #install.packages('remotes', dependencies = TRUE)
 #remotes::install_github("vqv/ggbiplot")
 
+#another example:
+#https://yi-hua.shinyapps.io/hw4_110/
 
 
 
-
-#---------------------------
-
-#Base Task (80 pts)
-#[20 pts] Basic information: name、department、student number
-#[30 pts] Make a shiny interactive web site to show PCA analysis (as the following picture) for the iris data such that users can specify which component to show (i.e., PC1, PC2, PC3 ...)
-#[30 pts] Make a shiny interactive web site to show correspondence analysis (CA) analysis for the iris data
-
-
-#---------------------------
+#======================(0)Library======================
 
 library(dplyr)    # alternatively, this also loads %>%
 library("ggplot2")
 library(shiny)
 library(ggbiplot)
-library(FactoMineR)
+library(FactoMineR) #https://www.clres.com/ca/pdepca01a.html   install.packages(c("FactoMineR", "factoextra"))
 library(factoextra)
+library(corrplot)
+library(DT)
 data(iris)
-
-#res.ca <- ca(obj=iris[1:100, 1:4], nd=4, graph = TRUE)
-#res.ca$colnames
-# summary(res.ca, scree = TRUE, rows = TRUE, columns = TRUE)
-
-
-#https://www.clres.com/ca/pdepca01a.html   install.packages(c("FactoMineR", "factoextra"))
-
-
-
-#CA(X = iris[1:input$n, 1:4], graph = FALSE) 
-#CA(X = iris[1:100, 1:4], graph = FALSE) 
-#> res.ca
-#**Results of the Correspondence Analysis (CA)**
-#The row variable has  100  categories; the column variable has 4 categories
-#The chi square of independence between the two variables is equal to 84.55842 (p-value =  1 ).
-#*The results are available in the following objects:
-#
-#   name              description
-#1  "$eig"            "eigenvalues"
-#2  "$col"            "results for the columns"
-#3  "$col$coord"      "coord. for the columns"
-#4  "$col$cos2"       "cos2 for the columns"
-#5  "$col$contrib"    "contributions of the columns"
-#6  "$row"            "results for the rows"
-#7  "$row$coord"      "coord. for the rows"
-#8  "$row$cos2"       "cos2 for the rows"
-#9  "$row$contrib"    "contributions of the rows"
-#10 "$call"           "summary called parameters"
-#11 "$call$marge.col" "weights of the columns"
-#12 "$call$marge.row" "weights of the rows"
-
-
-
-# fviz_ca_biplot(res.ca, repel = TRUE)
-
-
-
 
 
 #-------------------------------------------------
@@ -83,14 +43,42 @@ ui <- fluidPage(
 
     #======================(2)Content======================
     # ref: https://shiny.rstudio.com/tutorial/written-tutorial/lesson3/   ---- Add control widgets
+    
+    fluidRow(
+        
+        column(12, h3("Plot Control Panel"))
+    ),
+
+    
     fluidRow(  
-        helpText("Note: help text isn't a true widget,", 
-                            "but it provides an easy way to add text to",
-                            "accompany other widgets."),
-                    #id
-        radioButtons("height", h3("height"),
-                    choices = list("300px" = 300, "500px" = 500,
-                                   "800px" = 800), selected = 500)
+        column(4, 
+            #helpText("Note: help text isn't a true widget,", 
+            #                    "but it provides an easy way to add text to",
+            #                    "accompany other widgets."),
+                        #id
+            radioButtons("height_of_plot", h3("height of plot"),
+                        choices = list("300px" = 300, "500px" = 500,
+                                       "800px" = 800), selected = 500)        
+        
+        ),
+        column(4, 
+                        #id
+            radioButtons("label_font_size", h3("font size of label"),
+                        choices = list("12px" = 12, "16px" = 16,
+                                       "22px" = 22), selected = 16)           
+        
+        ),
+        column(4, 
+                        #id
+            radioButtons("data_point_size", h3("size of point"),
+                        choices = list("geom_size_1" = 1, "geom_size_1.5" = 2.5,
+                                       "geom_size_2" = 4), selected = 2.5)           
+        
+        )           
+
+                                   
+        #when id element is not consistent between ui and server, then 
+        #damn：Error in if: argument is of length zero
     ),
   
   
@@ -101,20 +89,13 @@ ui <- fluidPage(
             #<part_1>
             #ref: https://shiny.rstudio.com/tutorial/written-tutorial/lesson4/  ---- Display(input or output) reactive output
             sidebarPanel(
-
-                h3("choose how many input to do PCA:"),
-                #sliderInput(inputId = "bins",
-                #            label = "Number of points:",
-                #            min = 30,
-                #            max = 50,
-                #            value = 30),
                 sliderInput(inputId = "bins2",
                           label = "Number of points:",
                           min = 6,
                           max = nrow(iris),
                           value = 100),                      
                           
-                h3("choose what you wnt to see on PCA Result : Plot"),
+                h3("Using in PCA"),
                 selectInput(inputId = "select_x", h4("X Variable"), 
                                      choices = list("PC1" = 1, "PC2" = 2,
                                                     "PC3" = 3, "PC4" = 4), selected = 1),
@@ -123,9 +104,6 @@ ui <- fluidPage(
                                                     "PC3" = 3, "PC4" = 4), selected = 2),
                                                     
                 verbatimTextOutput("select_input_check")
-                                                    
-                                                    
-              
             ),
             #<part_2>
             mainPanel(
@@ -141,58 +119,159 @@ ui <- fluidPage(
                 # verbatimTextOutput	text  
                 # ============================
                 #h1("First level title", align = "center"),
-              
                 tabsetPanel(type = "tabs",
-                          #tabPanel("distPlot", plotOutput(outputId = "distPlot")),
-                          tabPanel("PCA Result: Plot", plotOutput(outputId = "pca_result_plot")),
-                          tabPanel("CA", 
-                              
-                              plotOutput(outputId = "ca_plot"),
-                              br(),
-                              br(),
-                              br(),
-                              br(),
-                              br(),
-                              br(),
-                              br(),
-                              br(),
-                              br(),
-                              br(),
-                              br(),
-                              br(),
-                              br(),
-                              br(),      
-                              br(),
-                              br(),
-                              br(),
-                              br(),
-                              br(),
-                              br(),
-                              br(),
-                              br(),
-                              br(), 
-                              pre(textOutput(outputId = "ca_summary_info"))
-                          ),
-                          tabPanel("Iris Dataset", pre(textOutput(outputId = "iris_row_data")))
+                    #【tab_1】
+                    tabPanel("PCA", 
+                        #【tab_1_1】
+                        fluidRow(
+                            column(12, h3("Summery of PCA for Iris"),
+                            pre(textOutput(outputId = "iris_pca_summary")))
+                            
+                            ),
+                        tabsetPanel(
+                            #【tab_1_2】
+                            tabPanel("PCA ggbiplot", 
+                                plotOutput(outputId = "pca_result_plot"),
+                                br(),
+                                br(),
+                                br(),
+                                br(),
+                                br(),
+                                br(),
+                                br(),
+                                br(),
+                                br(),
+                                br(),
+                                br(),
+                                br(),
+                                br(),
+                                br(),      
+                                br(),
+                                br(),
+                                br(),
+                                br(),
+                                br(),
+                                br(),
+                                br(),
+                                br(),
+                                br(),                                 
+                                        
+                            ),
+                            #【tab_1_3】
+                            tabPanel("PCA Data Table for Iris", 
+                            
+                                    fluidRow(
+                                            column(12, h3("Rotation Table"),
+                                            tableOutput("iris_pca_rotation_table")),                                           
+                                        
+                                        ),
+                                    fluidRow(
+                                            column(4, h3("center Table"),
+                                            tableOutput("iris_pca_center_table")),
+                                            column(4, h3("scale Table"),
+                                            tableOutput("iris_pca_scale_table")),   
+                                            column(4, h3("sdev Table"),
+                                            tableOutput("iris_pca_sdev_table"))
+                                        ),             
+                                    fluidRow(
+                                            column(8, h3("x Table"),
+                                            dataTableOutput("iris_pca_x_table")),                                             
+                                     
+                                        ),
+                            ),
+                                
+                        )
+                    ),
+                    #【tab_2】
+                    tabPanel("CA", 
+                        #【tab_2_1】
+                        plotOutput(outputId = "ca_plot"),
+                        br(),
+                        br(),
+                        br(),
+                        br(),
+                        br(),
+                        br(),
+                        br(),
+                        br(),
+                        br(),
+                        br(),
+                        br(),
+                        br(),
+                        br(),
+                        br(),      
+                        br(),
+                        br(),
+                        br(),
+                        br(),
+                        br(),
+                        br(),
+                        br(),
+                        br(),
+                        br(), 
+                        #【tab_2_2】
+                        pre(textOutput(outputId = "ca_summary_info"))
+                    ),
+                    #【tab_3】
+                    tabPanel("Iris Dataset", 
+                        #【tab_3_1】
+                        fluidRow(
+                            column(12, h3("Summery of Iris Dataset"),
+                            pre(textOutput(outputId = "iris_row_data")))
+                            
+                            ),
+                          tabsetPanel(
+                            #【tab_3_2】
+                            tabPanel("Correlations plot of Iris"
+                                , plotOutput("correlation_plot"),
+                                br(),
+                                br(),
+                                br(),
+                                br(),
+                                br(),
+                                br(),
+                                br(),
+                                br(),
+                                br(),
+                                br(),
+                                br(),
+                                br(),
+                                br(),
+                                br(),      
+                                br(),
+                                br(),
+                                br(),
+                                br(),
+                                br(),
+                                br(),
+                                br(),
+                                br(),
+                                br(),                                         
+                            ),
+                            #【tab_3_3】
+                            tabPanel("Iris Data Table", dataTableOutput("iris_data_table"))
+                          )                                     
+                        
+                    )
                 )
             )
         )
-      
-
-
     ),
 
     hr(),
-
+    #【emailToCarter】
     # https://shiny.rstudio.com/reference/shiny/latest/textoutput
-    textInput("comment", "Welcome to leave the comment to me. Please send to me via eamil, 111971013@nccu.edu.tw."),
-    verbatimTextOutput("action_to_comment")
+    fluidRow(
+        column(6, textInput("comment"
+                            , "Welcome to leave the comment to me. Please send to me via eamil :\n 【111971013@nccu.edu.tw】"),
+                            verbatimTextOutput("action_to_comment"))
+                            
+    )
 
   
   
   
 )
-
 
 
 # ref: https://shiny.rstudio.com/tutorial/written-tutorial/lesson5/ ---- output's lifecyle Use R scripts and data
@@ -209,53 +288,111 @@ server <- function(input, output, session) {
         # renderUI	a Shiny tag object or HTML  
         #=============================================
 
-        #output$distPlot <- renderPlot({
-        #  
-        #  x    <- faithful$waiting
-        #  bins <- seq(min(x), max(x), length.out = input$bins + 1)
-        #  
-        #  hist(x, breaks = bins, col = "#E5E5E5", border = "white",  ##75AADB
-        #       xlab = "Waiting time to next eruption (in mins)",
-        #       main = "Histogram of waiting times")
-        #  
-        #})
-  
+        # 【final countdown】
+        output$remaining_days <- renderText({
+            invalidateLater(1000, session)
 
+            paste("Still ", round(difftime("2024-5-25", Sys.time(), units='secs'), 0 )
+                , "secs(",  round(difftime("2024-5-25", Sys.time(), units = "days"), 0)
+                ,"days) until I graduate on 2024/5/25." )
+
+            #round(difftime("2024-5-25", Sys.time(), units = "days"), 0)
+            #round(difftime("2024-5-25", Sys.time(), units='secs')), 'secs')
+
+          
+        })
+          
+        
+        #【tab_1_PCA】
+        #【tab_1_1】
+        output$iris_pca_summary <- renderPrint({
+
+            summary(ir.pca)
+        })       
+        # 【select x y】
+        output$select_input_check <- renderText({
+        
+            
+            paste(input$select_x, input$select_y, input$bins2, sep="_")
+
+        })        
+        #【tab_1_2】
         output$pca_result_plot <- renderPlot({
             # log transform 
-            log.ir <- log(iris[1:input$bins2, 1:4])
-            ir.species <- iris[1:input$bins2, 5]
+            log.ir <<- log(iris[1:input$bins2, 1:4])
+            ir.species <<- iris[1:input$bins2, 5]
             # apply PCA - scale. = TRUE is highly advisable, but default is FALSE. 
-            ir.pca <- prcomp(log.ir,center = TRUE, scale. = TRUE)
+            ir.pca <<- prcomp(log.ir,center = TRUE, scale. = TRUE)
             
             g <- ggbiplot(ir.pca
                 , choices = c(as.numeric(input$select_x), as.numeric(input$select_y))
-                , obs.scale = 1, var.scale = 1, groups = ir.species)
+                , obs.scale = 1, var.scale = 1, groups = ir.species
+                , circle = TRUE) + geom_point(aes(colour=ir.species), size = as.numeric(input$data_point_size))
             g <- g + scale_color_discrete(name = '')
-            g <- g + theme(legend.direction = 'horizontal', legend.position = 'top')      
+            g <- g + theme(legend.direction = 'horizontal', 
+                        legend.position = 'top',
+                        legend.text = element_text(size=input$label_font_size),
+                        legend.title = element_text(size=input$label_font_size,face="bold"),
+                        #legend.key.size = unit(5, 'cm'),
+                        axis.text=element_text(size=input$label_font_size),
+                        axis.title=element_text(size=input$label_font_size,face="bold")) 
             g      
 
-        }, height = function(x) as.numeric(input$height))
+        }, height = function(x) as.numeric(input$height_of_plot))
   
   
-  
+
+        
+        #【tab_1_3】
+        output$iris_pca_rotation_table <-  renderTable(
+        
+            data.frame(ir.pca[2]$rotation),rownames = TRUE
+        
+        )
+        output$iris_pca_center_table <-  renderTable(
+        
+            data.frame(data = ir.pca[3]$center),rownames = TRUE
+        
+        )        
+        output$iris_pca_sdev_table <-  renderTable(
+        
+            data.frame(data = ir.pca[1]$sdev),rownames = TRUE
+        
+        )        
+        output$iris_pca_scale_table <-  renderTable(
+        
+            data.frame(data = ir.pca[4]$scale),rownames = TRUE
+        
+        )    
+        output$iris_pca_x_table <-  renderDataTable(
+        
+            data.frame(ir.pca[5]$x),rownames = TRUE
+        
+        )         
+        
+            
+        #【tab_2_CA】
+        #【tab_2_1】
         output$ca_plot <- renderPlot({
 
+            #(1)
             #library(ca)
             #res.ca <- ca(obj=iris[1:100, 1:4], nd=4, graph = TRUE)
+            #summary(res.ca, scree = TRUE, rows = TRUE, columns = TRUE)
+            
+            #(2)#https://www.clres.com/ca/pdepca01a.html   
             res.ca <- CA(X = iris[1:input$bins2, 1:4], graph = FALSE) 
 
-            fviz_ca_biplot(res.ca, repel = TRUE)
+            fviz_ca_biplot(res.ca
+                , labelsize = (as.numeric(input$label_font_size)/2)
+                , pointsize = (as.numeric(input$data_point_size)*1.1)
+                , invisible ="col", repel = TRUE)#+ theme_minimal() #+ geom_point(size = as.numeric(input$data_point_size))
+            #
+            #+ geom_point(aes(colour=ir.species), size = as.numeric(input$data_point_size))
 
-
-        }, height = function(x) as.numeric(input$height))
+        }, height = function(x) as.numeric(input$height_of_plot))
   
-  
-        output$iris_row_data <- renderText({
-
-        "654654"
-        }) 
-  
+        #【tab_2_2】
         output$ca_summary_info <- renderPrint({
 
 
@@ -264,42 +401,44 @@ server <- function(input, output, session) {
             summary(res.ca)
 
 
+        })   
+  
+        #【tab_3_Iris Dataset】
+        output$iris_row_data <- renderPrint({
+
+            summary(iris)
         }) 
+        #【tab_3_2】
+        output$correlation_plot <- renderPlot({
+
+            #library(corrplot)
+            corrplot(cor(iris[1:input$bins2, -5], method = "pearson"), number.cex = .9, method = "square", 
+                     hclust.method = "ward", order = "FPC",
+                     type = "full"
+                     , cl.cex = (as.numeric(input$data_point_size)*0.6)
+                     , tl.cex=(as.numeric(input$data_point_size)*0.6) ,tl.col = "black")                     
+
+        }, height = function(x) as.numeric(input$height_of_plot))        
+        
+        #【tab_3_3】
+        output$iris_data_table <-  renderDataTable(
+        
+            iris
+        
+        )
 
 
-  
-  
-  
-  
-        output$remaining_days <- renderText({
-            invalidateLater(1000, session)
-
-            paste("Still ", round(difftime("2024-5-25", Sys.time(), units='secs'), 0 )
-                , "secs(",  round(difftime("2024-5-25", Sys.time(), units = "days"), 0),"days) until I graduate." )
-
-            #round(difftime("2024-5-25", Sys.time(), units = "days"), 0)
-            #round(difftime("2024-5-25", Sys.time(), units='secs')), 'secs')
-
-          
-        })
-  
-  
+        #【emailToCarter】
         output$action_to_comment <- renderText({
             paste("Hi Carter:"
                     , ""
-                    , sprintf("%s", input$comment)  
+                    , sprintf("  %s", input$comment)
                     , ""
                     , "Yours Truly", "Yannan He & Jiaming Chang"
                     , sep = "\n") 
 
         })
   
-  
-    output$select_input_check <- renderText({
-        paste(input$select_x, input$select_y, input$bins2, sep="_")
-
-    })
-
 }
 
 # Create Shiny app ----
