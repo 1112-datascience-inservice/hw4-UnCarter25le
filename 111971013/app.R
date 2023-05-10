@@ -1,12 +1,35 @@
 
 
 # Note from assistant and Teacher:
+#【1】
 #ggbiplot is not on CRAN, it is only available on GitHub. It can be installed by following cmmand.
 
 #install.packages('remotes', dependencies = TRUE)
 #remotes::install_github("vqv/ggbiplot")
 
-#another example:
+#【2】deploy shinyapp error
+#Preparing to deploy application...DONE
+#Uploading bundle for application: 9081079...DONE
+#Deploying bundle: 7200756 for application: 9081079 ...
+#Waiting for task: 1299176728
+#  building: Parsing manifest
+#  building: Building image: 8559090
+#  building: Fetching packages
+#  building: Building package: MASS
+################################# Begin Task Log ################################ 
+################################## End Task Log ################################# 
+#Error: Unhandled Exception: Child Task 1299176729 failed: Error building image: Error fetching MASS (7.3-58.4) source. <CRANPackageSource repo='http://cran.rstudio.org'> unable to satisfy package: MASS (7.3-58.4)
+#Execution halted
+#=============================
+# correct answer!
+#https://cran.r-project.org/web/packages/MASS/index.html
+#install.packages("MASS", version='7.3-60')
+# neitzon's answer
+#devtools::install_version("MASS", "7.3-60")
+#=============================
+
+
+#【3】another example:
 #https://yi-hua.shinyapps.io/hw4_110/
 
 
@@ -21,6 +44,7 @@ library(FactoMineR) #https://www.clres.com/ca/pdepca01a.html   install.packages(
 library(factoextra)
 library(corrplot)
 library(DT)
+library(MASS)
 data(iris)
 
 
