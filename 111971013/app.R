@@ -267,16 +267,12 @@ ui <- fluidPage(
                             verbatimTextOutput("action_to_comment"))
                             
     )
-
-  
-  
   
 )
 
 
 # ref: https://shiny.rstudio.com/tutorial/written-tutorial/lesson5/ ---- output's lifecyle Use R scripts and data
 server <- function(input, output, session) {
-  
         #=============================================
         # render function	creates:
         # renderDataTable	DataTable
@@ -287,6 +283,23 @@ server <- function(input, output, session) {
         # renderText	character strings
         # renderUI	a Shiny tag object or HTML  
         #=============================================
+
+        generate_ir_pca <- reactive({
+            # log transform 
+            log.ir <- log(iris[1:input$bins2, 1:4])
+            ir.species <- iris[1:input$bins2, 5]
+            # apply PCA - scale. = TRUE is highly advisable, but default is FALSE. 
+            ir.pca <- prcomp(log.ir,center = TRUE, scale. = TRUE)
+            ir.pca
+        })  
+        generate_ir_ca <- reactive({
+            res.ca <- CA(X = iris[1:input$bins2, 1:4], graph = FALSE) 
+            res.ca
+        })  
+                
+        
+        
+        
 
         # 【final countdown】
         output$remaining_days <- renderText({
@@ -307,23 +320,22 @@ server <- function(input, output, session) {
         #【tab_1_1】
         output$iris_pca_summary <- renderPrint({
 
-            summary(ir.pca)
+            summary(generate_ir_pca())
         })       
         # 【select x y】
         output$select_input_check <- renderText({
-        
-            
             paste(input$select_x, input$select_y, input$bins2, sep="_")
 
         })        
         #【tab_1_2】
         output$pca_result_plot <- renderPlot({
             # log transform 
-            log.ir <<- log(iris[1:input$bins2, 1:4])
-            ir.species <<- iris[1:input$bins2, 5]
+            log.ir <- log(iris[1:input$bins2, 1:4])
+            ir.species <- iris[1:input$bins2, 5]
             # apply PCA - scale. = TRUE is highly advisable, but default is FALSE. 
-            ir.pca <<- prcomp(log.ir,center = TRUE, scale. = TRUE)
+            ir.pca <- prcomp(log.ir,center = TRUE, scale. = TRUE)
             
+            #tmp <- generate_ir_pca()
             g <- ggbiplot(ir.pca
                 , choices = c(as.numeric(input$select_x), as.numeric(input$select_y))
                 , obs.scale = 1, var.scale = 1, groups = ir.species
@@ -341,32 +353,34 @@ server <- function(input, output, session) {
         }, height = function(x) as.numeric(input$height_of_plot))
   
   
-
-        
         #【tab_1_3】
+      
         output$iris_pca_rotation_table <-  renderTable(
         
-            data.frame(ir.pca[2]$rotation),rownames = TRUE
+
+            data.frame(generate_ir_pca()[2]$rotation)
+            
+            ,rownames = TRUE
         
         )
         output$iris_pca_center_table <-  renderTable(
         
-            data.frame(data = ir.pca[3]$center),rownames = TRUE
+            data.frame(data = generate_ir_pca()[3]$center),rownames = TRUE
         
         )        
         output$iris_pca_sdev_table <-  renderTable(
         
-            data.frame(data = ir.pca[1]$sdev),rownames = TRUE
+            data.frame(data = generate_ir_pca()[1]$sdev),rownames = TRUE
         
         )        
         output$iris_pca_scale_table <-  renderTable(
         
-            data.frame(data = ir.pca[4]$scale),rownames = TRUE
+            data.frame(data = generate_ir_pca()[4]$scale),rownames = TRUE
         
         )    
         output$iris_pca_x_table <-  renderDataTable(
         
-            data.frame(ir.pca[5]$x),rownames = TRUE
+            data.frame(generate_ir_pca()[5]$x),rownames = TRUE
         
         )         
         
@@ -381,9 +395,9 @@ server <- function(input, output, session) {
             #summary(res.ca, scree = TRUE, rows = TRUE, columns = TRUE)
             
             #(2)#https://www.clres.com/ca/pdepca01a.html   
-            res.ca <- CA(X = iris[1:input$bins2, 1:4], graph = FALSE) 
+            tmp <- generate_ir_ca()
 
-            fviz_ca_biplot(res.ca
+            fviz_ca_biplot(tmp
                 , labelsize = (as.numeric(input$label_font_size)/2)
                 , pointsize = (as.numeric(input$data_point_size)*1.1)
                 , invisible ="col", repel = TRUE)#+ theme_minimal() #+ geom_point(size = as.numeric(input$data_point_size))
@@ -394,19 +408,12 @@ server <- function(input, output, session) {
   
         #【tab_2_2】
         output$ca_summary_info <- renderPrint({
-
-
-            res.ca <- CA(X = iris[1:input$bins2, 1:4], graph = FALSE)
-
-            summary(res.ca)
-
-
+            summary(generate_ir_ca())
         })   
   
         #【tab_3_Iris Dataset】
         output$iris_row_data <- renderPrint({
-
-            summary(iris)
+            summary(iris[1:input$bins2, -5])
         }) 
         #【tab_3_2】
         output$correlation_plot <- renderPlot({
@@ -422,8 +429,7 @@ server <- function(input, output, session) {
         
         #【tab_3_3】
         output$iris_data_table <-  renderDataTable(
-        
-            iris
+            iris[1:input$bins2, -5]
         
         )
 
