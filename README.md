@@ -4,6 +4,67 @@
 #### Student ID: [111971013]
 #### ShinyApps link: [<https://uncarter25le.shinyapps.io/NCCU_DS2023_hw4_111971013/>]
 
+
+## My Claim
+
+1. Libraries I use:
+
+      ```
+    library(dplyr)    
+    library("ggplot2")
+    library(shiny)
+    library(ggbiplot)
+    library(FactoMineR) 
+    library(factoextra)
+    library(corrplot)
+    library(DT)
+    library(MASS)
+
+    ```
+
+2. The tour guide of my design:
+
+    1. Part1: This is for controlling `the elements of rendered plot` on the aspect of size, such as picutre, label, data point, and legend.
+
+    2. Part2: This is for choosing which `main content` to show. According to requirements of assignment, main content includes PCA, CA, and explacation for Iris Dataset.
+
+    3. Part3: This is affected by the `clicking tabs` at the Part2.
+
+    4. Part4: This will exist if main content needs `sub content` to explain further.
+
+    5. Part5: This is for controlling `the numbers of data input and which PC element` to render.
+      
+        - The `horizontal scroll` bar will affect PCA, CA and Iris Dataset.
+
+        - The `select option` will affect PCA ggbiplot.
+
+        - The rest of Part5 is `for check now` what the digits controlled at this are.
+
+    6. Part6: If this assignment does touch you, you are encouraged to type words in the `text input window` and copy the `text ouput` to send me email.
+
+    ![layout_design](/demo_photos/layout_design.png)
+
+
+
+3. Annoying Problem I confront but get around in the end:
+
+    1. deploying error:
+        - shinyapp can't fetch the MASS package at the version, 7.3-58.4, My local project defines.
+
+    2. The method really does the trick:
+        
+        - Based on [MASS package info from CRAN](https://cran.r-project.org/web/packages/MASS/index.html), all I need to do `is  install MASS package at the version 7.3-60 locally`. And, Shinyapp server can fetch the correct version of MASS when bundling my project. 
+
+          ![deploy_error](/demo_photos/deploy_error.png)
+
+        - Neitzen's advice isn't working, which is executing `devtools::install_version("MASS", "7.3-51.1")`. The command will prompt me to install another program, Rstool accounting for 3GB, and it doesn' do the trick! 
+
+          ![neitzen_advice_not_work](/demo_photos/neitzen_advice_not_work.png)
+
+
+
+---
+
 ## Description
 
 <p align="center">
